@@ -126,6 +126,19 @@
                     📚 词汇检测
                 </button>
             </div>
+            
+            <!-- 分组选择区域 -->
+            <div id="groupSelection" class="hidden mt-6 pt-6 border-t border-gray-200">
+                <div class="text-center mb-4">
+                    <div class="text-sm md:text-base text-gray-700 font-medium mb-3">📋 选择题目分组（每组15题）</div>
+                    <div id="groupButtons" class="flex flex-wrap gap-2 justify-center">
+                        <!-- 分组按钮将通过JavaScript动态生成 -->
+                    </div>
+                    <div class="mt-3 text-xs text-gray-500">
+                        当前选择：<span id="currentGroup" class="font-bold text-blue-600">全部题目</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 统计信息 -->
@@ -184,8 +197,19 @@
                     <div id="hintArea" class="hidden mt-3 md:mt-4 p-3 md:p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-lg">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <div class="text-xs md:text-sm text-indigo-900 font-medium mb-2">💡 提示信息：</div>
+                                <div class="text-xs md:text-sm text-indigo-900 font-medium mb-2">💡 一级提示：</div>
                                 <div id="hintContent" class="text-base md:text-lg text-indigo-700"></div>
+                                
+                                <!-- 二级提示按钮 -->
+                                <button onclick="showLevel2Hint()" id="level2HintBtn" class="mt-3 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs md:text-sm font-medium transition-colors">
+                                    🔍 显示更详细提示（二级）
+                                </button>
+                                
+                                <!-- 二级提示内容 -->
+                                <div id="level2HintContent" class="hidden mt-3 pt-3 border-t border-indigo-200">
+                                    <div class="text-xs md:text-sm text-indigo-900 font-medium mb-2">🔍 二级提示：</div>
+                                    <div id="level2HintText" class="text-base md:text-lg text-indigo-800"></div>
+                                </div>
                             </div>
                             <button onclick="hideHint()" class="ml-2 md:ml-4 text-indigo-400 hover:text-indigo-600 p-2">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -626,12 +650,21 @@
         let wrongCount = 0;
         let isStarted = false;
         let isChecked = false;
+        let selectedGroup = 'all'; // 'all' 或组号 (0, 1, 2...)
+        const GROUP_SIZE = 15; // 每组题目数量
 
         // ==================== 断点续练功能 ====================
         
         // 加载保存的进度
         function loadProgress() {
             const savedIndex = localStorage.getItem(`translation_${currentMode}_index`);
+            const savedGroup = localStorage.getItem(`translation_${currentMode}_group`);
+            
+            if (savedGroup !== null) {
+                selectedGroup = savedGroup === 'all' ? 'all' : parseInt(savedGroup);
+                console.log(`已恢复${currentMode === 'phrase' ? '词组' : '词汇'}练习分组：${selectedGroup === 'all' ? '全部' : '第' + (selectedGroup + 1) + '组'}`);
+            }
+            
             if (savedIndex !== null) {
                 currentIndex = parseInt(savedIndex);
                 console.log(`已恢复${currentMode === 'phrase' ? '词组' : '词汇'}练习进度：第${currentIndex + 1}题`);
@@ -675,6 +708,9 @@
                 phraseBtn.className = 'px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-bold text-lg shadow btn-hover w-full md:w-auto';
             }
             
+            // 显示分组选择区域并生成分组按钮
+            generateGroupButtons();
+            
             // 重置状态并加载进度
             resetState();
             loadProgress();
@@ -701,6 +737,87 @@
             document.getElementById('checkBtn').classList.add('hidden');
             document.getElementById('nextBtn').classList.add('hidden');
             document.getElementById('showAnswerBtn').classList.add('hidden');
+        }
+
+        // ==================== 分组功能 ====================
+        
+        // 生成分组按钮
+        function generateGroupButtons() {
+            const data = getCurrentData();
+            const totalGroups = Math.ceil(data.length / GROUP_SIZE);
+            const groupSelection = document.getElementById('groupSelection');
+            const groupButtons = document.getElementById('groupButtons');
+            
+            // 显示分组选择区域
+            groupSelection.classList.remove('hidden');
+            
+            // 清空现有按钮
+            groupButtons.innerHTML = '';
+            
+            // 添加“全部题目”按钮
+            const allBtn = createGroupButton('全部', 'all', selectedGroup === 'all');
+            groupButtons.appendChild(allBtn);
+            
+            // 添加分组按钮
+            for (let i = 0; i < totalGroups; i++) {
+                const startNum = i * GROUP_SIZE + 1;
+                const endNum = Math.min((i + 1) * GROUP_SIZE, data.length);
+                const btn = createGroupButton(`第${i + 1}组 (${startNum}-${endNum})`, i, selectedGroup === i);
+                groupButtons.appendChild(btn);
+            }
+        }
+        
+        // 创建分组按钮
+        function createGroupButton(label, groupIndex, isActive) {
+            const btn = document.createElement('button');
+            btn.className = `px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors mobile-btn ${
+                isActive 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`;
+            btn.textContent = label;
+            btn.onclick = () => selectGroup(groupIndex);
+            return btn;
+        }
+        
+        // 选择分组
+        function selectGroup(groupIndex) {
+            selectedGroup = groupIndex;
+            
+            // 更新当前分组显示
+            const currentGroupText = document.getElementById('currentGroup');
+            if (groupIndex === 'all') {
+                currentGroupText.textContent = '全部题目';
+            } else {
+                const startNum = groupIndex * GROUP_SIZE + 1;
+                const data = getCurrentData();
+                const endNum = Math.min((groupIndex + 1) * GROUP_SIZE, data.length);
+                currentGroupText.textContent = `第${groupIndex + 1}组 (${startNum}-${endNum}题)`;
+            }
+            
+            // 重新生成分组按钮以更新样式
+            generateGroupButtons();
+            
+            // 重置练习状态
+            if (isStarted) {
+                resetState();
+            }
+            
+            // 保存分组选择
+            localStorage.setItem(`translation_${currentMode}_group`, selectedGroup);
+        }
+        
+        // 获取当前分组的题目数据
+        function getGroupedData() {
+            const allData = getCurrentData();
+            
+            if (selectedGroup === 'all') {
+                return allData;
+            }
+            
+            const startIndex = selectedGroup * GROUP_SIZE;
+            const endIndex = Math.min(startIndex + GROUP_SIZE, allData.length);
+            return allData.slice(startIndex, endIndex);
         }
 
         // 开始练习
@@ -734,6 +851,8 @@
             document.getElementById('userInput').value = '';
             document.getElementById('feedbackArea').classList.add('hidden');
             document.getElementById('hintArea').classList.add('hidden'); // 隐藏提示区域
+            document.getElementById('level2HintContent').classList.add('hidden'); // 隐藏二级提示
+            document.getElementById('level2HintBtn').classList.remove('hidden'); // 显示二级提示按钮
             isChecked = false;
             
             // 检查是否是多答案题目
@@ -750,7 +869,7 @@
 
         // 获取当前数据
         function getCurrentData() {
-            return currentMode === 'phrase' ? phraseData : vocabularyData;
+            return getGroupedData();
         }
 
         // 检查答案
@@ -943,6 +1062,76 @@
         // 隐藏提示
         function hideHint() {
             document.getElementById('hintArea').classList.add('hidden');
+            document.getElementById('level2HintContent').classList.add('hidden');
+            document.getElementById('level2HintBtn').classList.remove('hidden');
+        }
+        
+        // 显示二级提示
+        function showLevel2Hint() {
+            const data = getCurrentData();
+            const currentItem = data[currentIndex];
+            
+            if (!currentItem) return;
+            
+            let level2Text = '';
+            
+            if (currentMode === 'phrase') {
+                // 词组模式：显示更多字母
+                const answer = currentItem.english;
+                const revealedAnswer = revealMoreLetters(answer, 0.5); // 显示50%的字母
+                
+                level2Text = `
+                    <div class="space-y-2">
+                        <div><strong>部分字母提示：</strong></div>
+                        <div class="text-xl font-bold text-indigo-900 bg-white p-3 rounded-lg">${revealedAnswer}</div>
+                        <div class="text-xs text-indigo-600 mt-2">灰色下划线为需要填写的字母</div>
+                    </div>
+                `;
+            } else {
+                // 词汇模式：显示更多字母
+                const answers = currentItem.english;
+                level2Text = '<div class="space-y-3">';
+                
+                answers.forEach((answer, index) => {
+                    const revealedAnswer = revealMoreLetters(answer, 0.6); // 显示60%的字母
+                    
+                    level2Text += `
+                        <div class="p-3 bg-white rounded-lg border border-indigo-200">
+                            <div class="text-sm text-indigo-600 mb-2">答案 ${index + 1}：</div>
+                            <div class="text-lg font-bold text-indigo-900">${revealedAnswer}</div>
+                        </div>
+                    `;
+                });
+                
+                level2Text += '</div>';
+            }
+            
+            document.getElementById('level2HintText').innerHTML = level2Text;
+            document.getElementById('level2HintContent').classList.remove('hidden');
+            document.getElementById('level2HintBtn').classList.add('hidden');
+        }
+        
+        // 显示更多字母（按比例）
+        function revealMoreLetters(word, ratio) {
+            const letters = word.split('');
+            const length = letters.length;
+            let result = '';
+            
+            for (let i = 0; i < length; i++) {
+                if (letters[i] === ' ') {
+                    result += ' ';
+                } else {
+                    // 根据比例决定是否显示该字母
+                    // 首尾字母总是显示
+                    if (i === 0 || i === length - 1 || Math.random() < ratio) {
+                        result += letters[i];
+                    } else {
+                        result += '<span class="text-gray-400">_</span>';
+                    }
+                }
+            }
+            
+            return result;
         }
         
         // 遮蔽单词（显示部分字母）
