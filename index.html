@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语翻译检测小程序</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            .mobile-padding {
+                padding: 1rem !important;
+            }
+            
+            .mobile-text-xl {
+                font-size: 1.25rem !important;
+            }
+            
+            .mobile-text-2xl {
+                font-size: 1.5rem !important;
+            }
+            
+            .mobile-text-3xl {
+                font-size: 1.75rem !important;
+            }
+            
+            .mobile-btn {
+                padding: 0.875rem 1.5rem !important;
+                font-size: 1rem !important;
+                min-height: 48px;
+            }
+            
+            .mobile-input {
+                padding: 0.875rem 1rem !important;
+                font-size: 1rem !important;
+            }
+        }
+        
+        .correct-answer {
+            animation: correctPulse 0.5s ease-in-out;
+        }
+        
+        .wrong-answer {
+            animation: wrongShake 0.5s ease-in-out;
+        }
+        
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .btn-hover {
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+        }
+        
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-hover:active {
+            transform: translateY(0);
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+        
+        /* 防止移动端双击缩放 */
+        button, input {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="p-3 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- 头部 -->
+        <header class="text-center mb-4 md:mb-8">
+            <h1 class="text-2xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+                🎯 英语翻译检测
+            </h1>
+            <p class="text-white/90 text-sm md:text-lg">词组 & 词汇拼写练习</p>
+        </header>
+
+        <!-- 模式选择 -->
+        <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl p-4 md:p-6 mb-4 md:mb-6 fade-in mobile-padding">
+            <div class="flex flex-col md:flex-row gap-3 md:gap-4 justify-center items-center">
+                <button onclick="switchMode('phrase')" id="phraseBtn" 
+                    class="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover w-full mobile-btn">
+                    📝 词组检测
+                </button>
+                <button onclick="switchMode('vocabulary')" id="vocabularyBtn" 
+                    class="px-6 py-3 md:px-8 md:py-4 bg-gray-200 text-gray-700 rounded-xl font-bold text-base md:text-lg shadow btn-hover w-full mobile-btn">
+                    📚 词汇检测
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-4 md:p-6 mb-4 md:mb-6 fade-in mobile-padding">
+            <div class="grid grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-blue-600" id="totalCount">0</div>
+                    <div class="text-gray-600 text-xs md:text-sm mt-1">总题数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-purple-600" id="currentQuestionNum">0</div>
+                    <div class="text-gray-600 text-xs md:text-sm mt-1">当前题号</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-green-600" id="correctCount">0</div>
+                    <div class="text-gray-600 text-xs md:text-sm mt-1">正确</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-red-600" id="wrongCount">0</div>
+                    <div class="text-gray-600 text-xs md:text-sm mt-1">错误</div>
+                </div>
+                <div class="text-center col-span-3 md:col-span-1">
+                    <div class="text-2xl md:text-3xl font-bold text-purple-600" id="accuracyRate">0%</div>
+                    <div class="text-gray-600 text-xs md:text-sm mt-1">正确率</div>
+                </div>
+            </div>
+            
+            <!-- 进度条 -->
+            <div class="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <button onclick="clearProgress()" class="px-3 py-2 md:px-4 md:py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors text-xs md:text-sm w-full md:w-auto mobile-btn">
+                    🗑️ 清除进度
+                </button>
+                <div class="flex-1 w-full">
+                    <div class="flex justify-between text-xs md:text-sm text-gray-600 mb-2">
+                        <span>进度</span>
+                        <span id="progressText">0/0</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 md:h-3">
+                        <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-500 h-2.5 md:h-3 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主练习区域 -->
+        <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl p-4 md:p-8 fade-in mobile-padding">
+            <!-- 题目显示区域 -->
+            <div class="mb-6 md:mb-8">
+                <div class="text-center mb-4 md:mb-6">
+                    <div class="text-xs md:text-sm text-gray-500 mb-2">请根据中文含义拼写英文</div>
+                    <div id="chineseDisplay" class="text-xl md:text-4xl font-bold text-gray-800 py-6 md:py-8 px-3 md:px-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl mobile-text-3xl">
+                        点击开始按钮开始练习
+                    </div>
+                    
+                    <!-- 智能提示区域 -->
+                    <div id="hintArea" class="hidden mt-3 md:mt-4 p-3 md:p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-lg">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="text-xs md:text-sm text-indigo-900 font-medium mb-2">💡 提示信息：</div>
+                                <div id="hintContent" class="text-base md:text-lg text-indigo-700"></div>
+                            </div>
+                            <button onclick="hideHint()" class="ml-2 md:ml-4 text-indigo-400 hover:text-indigo-600 p-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 多答案提示 -->
+                <div id="multiAnswerHint" class="hidden mb-3 md:mb-4 p-3 md:p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                    <div class="flex items-start">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="text-xs md:text-sm text-yellow-800">
+                            <strong>提示：</strong>此中文含义对应多个英文单词，请全部拼写（用逗号或空格分隔）
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="mb-4 md:mb-6">
+                <label class="block text-gray-700 font-medium mb-2 md:mb-3 text-base md:text-lg">
+                    请输入英文：
+                </label>
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    class="w-full px-4 py-3 md:px-6 md:py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 input-focus text-lg md:text-xl transition-all mobile-input"
+                    placeholder="在此输入英文..."
+                    disabled
+                >
+                <div class="mt-2 md:mt-3 text-xs md:text-sm text-gray-500">
+                    💡 提示：词组检测可忽略空格和大小写；词汇检测为单个单词拼写
+                </div>
+            </div>
+
+            <!-- 反馈区域 -->
+            <div id="feedbackArea" class="hidden mb-4 md:mb-6 p-4 md:p-6 rounded-xl fade-in">
+                <div id="feedbackContent"></div>
+            </div>
+
+            <!-- 按钮区域 -->
+            <div class="flex flex-col gap-3 md:gap-4">
+                <button onclick="startPractice()" id="startBtn" 
+                    class="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover mobile-btn">
+                    ▶️ 开始练习
+                </button>
+                
+                <button onclick="showHint()" id="hintBtn" 
+                    class="hidden px-6 py-3 md:px-6 md:py-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover mobile-btn">
+                    💡 显示提示
+                </button>
+                
+                <button onclick="checkAnswer()" id="checkBtn" 
+                    class="hidden px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover mobile-btn">
+                    ✓ 检查答案
+                </button>
+                
+                <button onclick="nextQuestion()" id="nextBtn" 
+                    class="hidden px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover mobile-btn">
+                    ➡️ 下一题
+                </button>
+                
+                <button onclick="showAnswer()" id="showAnswerBtn" 
+                    class="hidden px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover mobile-btn">
+                    👀 查看答案
+                </button>
+            </div>
+        </div>
+
+        <!-- 完成提示 -->
+        <div id="completionModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full text-center mobile-padding">
+                <div class="text-5xl md:text-6xl mb-3 md:mb-4">🎉</div>
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">练习完成！</h2>
+                <div class="space-y-2 md:space-y-3 mb-4 md:mb-6">
+                    <div class="text-base md:text-lg">
+                        <span class="text-gray-600">总题数：</span>
+                        <span class="font-bold text-blue-600" id="finalTotal">0</span>
+                    </div>
+                    <div class="text-base md:text-lg">
+                        <span class="text-gray-600">正确：</span>
+                        <span class="font-bold text-green-600" id="finalCorrect">0</span>
+                    </div>
+                    <div class="text-base md:text-lg">
+                        <span class="text-gray-600">错误：</span>
+                        <span class="font-bold text-red-600" id="finalWrong">0</span>
+                    </div>
+                    <div class="text-base md:text-lg">
+                        <span class="text-gray-600">正确率：</span>
+                        <span class="font-bold text-purple-600" id="finalAccuracy">0%</span>
+                    </div>
+                </div>
+                <button onclick="restartPractice()" 
+                    class="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold text-base md:text-lg shadow-lg btn-hover w-full mobile-btn">
+                    🔄 重新开始
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 数据定义 ====================
+        
+        // 词组数据（来自翻译练习 - 完整版130题）
+        const phraseData = [
+            { chinese: "利用，占便宜", english: "take advantage of" },
+            { chinese: "引起，导致", english: "give rise to" },
+            { chinese: "应对，处理", english: "cope with" },
+            { chinese: "归因于", english: "be attributed to" },
+            { chinese: "致力于，承诺", english: "be committed to" },
+            { chinese: "有助于，有利于", english: "be conducive to" },
+            { chinese: "由...组成", english: "be composed of" },
+            { chinese: "致力于，专用于", english: "be dedicated to" },
+            { chinese: "缺乏", english: "be deficient in" },
+            { chinese: "有权，有资格", english: "be entitled to" },
+            { chinese: "易于，倾向于", english: "be prone to" },
+            { chinese: "在...方面，就...而言", english: "in terms of" },
+            { chinese: "在...中起关键作用", english: "play a crucial role in" },
+            { chinese: "有影响，起作用", english: "make a difference" },
+            { chinese: "必然，注定", english: "be bound to" },
+            { chinese: "对...表示怀疑", english: "cast doubt on" },
+            { chinese: "意识到，知道", english: "be aware of" },
+            { chinese: "可能", english: "be likely to" },
+            { chinese: "对...产生影响", english: "have an impact on" },
+            { chinese: "配备有", english: "be equipped with" },
+            { chinese: "促进，推进", english: "promote" },
+            { chinese: "消除，排除", english: "eliminate" },
+            { chinese: "强调", english: "emphasize" },
+            { chinese: "实施，执行", english: "implement" },
+            { chinese: "维持，保持", english: "maintain" },
+            { chinese: "获得，获取", english: "acquire" },
+            { chinese: "面临，面对", english: "face" },
+            { chinese: "解决", english: "resolve" },
+            { chinese: "提高，增强", english: "enhance" },
+            { chinese: "减少，降低", english: "reduce" },
+            { chinese: "以…自豪", english: "take pride in" },
+            { chinese: "私下, 秘密地", english: "in private" },
+            { chinese: "公开地", english: "in public" },
+            { chinese: "禁止, 阻止", english: "prohibit…from" },
+            { chinese: "故意", english: "on purpose" },
+            { chinese: "在某种科目或学科上合格", english: "be qualified in" },
+            { chinese: "在某种职业上合格", english: "be qualified for" },
+            { chinese: "不可能的", english: "out of the question" },
+            { chinese: "所谈及的", english: "in question" },
+            { chinese: "毫无疑问", english: "without question" },
+            { chinese: "随便地, 任意地, 胡乱地", english: "at random" },
+            { chinese: "无法达到", english: "beyond the reach of" },
+            { chinese: "向…问候", english: "give one's regards to sb." },
+            { chinese: "不顾,不考虑", english: "regardless of" },
+            { chinese: "和…有关的", english: "relevant to" },
+            { chinese: "谋生", english: "make a living" },
+            { chinese: "成功", english: "make it" },
+            { chinese: "充分利用", english: "make the best / most of" },
+            { chinese: "许多", english: "many a" },
+            { chinese: "批改考卷", english: "mark the papers" },
+            { chinese: "满足要求", english: "meet one's needs" },
+            { chinese: "不妨", english: "might as well" },
+            { chinese: "认错", english: "mistake a for b" },
+            { chinese: "或多或少，有点", english: "more or less" },
+            { chinese: "我请客", english: "my treat" },
+            { chinese: "九死一生", english: "narrow escape" },
+            { chinese: "必要", english: "necessary to /for" },
+            { chinese: "隔壁的，在隔壁", english: "next door" },
+            { chinese: "下一个，其次", english: "next to" },
+            { chinese: "无疑地", english: "no doubt" },
+            { chinese: "不少于……;不亚于", english: "no less than" },
+            { chinese: "不再", english: "no longer" },
+            { chinese: "至多，同……一样不", english: "no more than" },
+            { chinese: "不再是别的，正是", english: "none other than" },
+            { chinese: "只有，只不过", english: "nothing but" },
+            { chinese: "时而，偶尔", english: "now and then" },
+            { chinese: "一想到…", english: "at the thought of" },
+            { chinese: "就整体而论", english: "as a whole" },
+            { chinese: "随心所欲", english: "at will" },
+            { chinese: "富于，富有", english: "be abundant in" },
+            { chinese: "能接近，进入，了解", english: "access(to)" },
+            { chinese: "偶然地，意外", english: "by accident" },
+            { chinese: "安全地", english: "Without accident" },
+            { chinese: "自愿地，主动地", english: "of one's own accord" },
+            { chinese: "与…一致", english: "in accord with" },
+            { chinese: "喘气,松口气;屏息", english: "catch one's breath" },
+            { chinese: "引人注目", english: "catch one's eye" },
+            { chinese: "看到,发现", english: "catch sight of" },
+            { chinese: "生效;实施", english: "come into effect" },
+            { chinese: "施行,实行,生效", english: "come into operation" },
+            { chinese: "醒悟;苏醒", english: "come to one's senses" },
+            { chinese: "实现", english: "come true" },
+            { chinese: "要不住,忍不住", english: "could not help" },
+            { chinese: "中断,打断", english: "cut short" },
+            { chinese: "尽力,努力", english: "do one's best" },
+            { chinese: "过得快活", english: "enjoy oneself" },
+            { chinese: "爱上", english: "fall in love with" },
+            { chinese: "找岔", english: "find fault(with)" },
+            { chinese: "胜过,优于", english: "gain an advantage over" },
+            { chinese: "得到,获得", english: "get hold of" },
+            { chinese: "丢弃,摆脱", english: "get rid of" },
+            { chinese: "战胜", english: "get the best of" },
+            { chinese: "战胜,占上风", english: "get the better of" },
+            { chinese: "会面,装配", english: "get together" },
+            { chinese: "让路,让步", english: "give way" },
+            { chinese: "无兴趣,不关心", english: "indifferent to" },
+            { chinese: "愤慨", english: "indignant with sb." },
+            { chinese: "级别低于,不如", english: "inferior to" },
+            { chinese: "无……罪,无辜", english: "innocent of" },
+            { chinese: "专心于", english: "intent on" },
+            { chinese: "不可见的", english: "invisible to" },
+            { chinese: "嫉妒", english: "jealous of" },
+            { chinese: "爱好,很喜欢", english: "keep on" },
+            { chinese: "对……有责任", english: "liable for" },
+            { chinese: "易于", english: "liable to" },
+            { chinese: "忠于", english: "loyal to" },
+            { chinese: "生气,愤怒", english: "mad at/with sb." },
+            { chinese: "因……发狂", english: "mad with" },
+            { chinese: "挑剔,讲究", english: "particular about" },
+            { chinese: "与……平等,类似", english: "parallel to" },
+            { chinese: "独特的,独有的", english: "peculiar to" },
+            { chinese: "有耐心", english: "patient with" },
+            { chinese: "在……之前", english: "prior to" },
+            { chinese: "工业化", english: "industrialization" },
+            { chinese: "城市化", english: "urbanization" },
+            { chinese: "现代化", english: "modernization" },
+            { chinese: "全球化", english: "globalization" },
+            { chinese: "可持续发展", english: "sustainable development" },
+            { chinese: "环境保护", english: "environmental protection" },
+            { chinese: "全球变暖", english: "global warming" },
+            { chinese: "温室效应", english: "greenhouse effect" },
+            { chinese: "垃圾分类", english: "garbage classification" },
+            { chinese: "碳中和", english: "carbon neutralization" },
+            { chinese: "实现碳中和", english: "achieve carbon neutrality" },
+            { chinese: "可再生能源", english: "renewable resources" },
+            { chinese: "开发可再生能源", english: "develop renewable resources" },
+            { chinese: "生态平衡", english: "ecological balance" },
+            { chinese: "节能减排", english: "energy conservation and emission reduction" },
+            { chinese: "绿色发展", english: "green development" },
+            { chinese: "空气污染", english: "air pollution" },
+            { chinese: "基础设施", english: "infrastructure" },
+            { chinese: "城市人口", english: "urban population" },
+            { chinese: "农村人口", english: "rural population" },
+            { chinese: "人口激增", english: "population explosion" },
+            { chinese: "第三产业", english: "tertiary industry" },
+            { chinese: "过度工业化", english: "over-industrialization" },
+            { chinese: "交通拥堵", english: "traffic congestion" },
+            { chinese: "水资源短缺", english: "water scarcity" },
+            { chinese: "环境恶化", english: "environmental degradation" },
+            { chinese: "资源枯竭", english: "resources exhaustion" }
+        ];
+
+        // 词汇数据（来自学习笔记系统 - 仅包含单个单词，已移除词组）
+        const vocabularyData = [
+            { chinese: "利益", english: ["interest"] },
+            { chinese: "领域", english: ["field"] },
+            { chinese: "私人的", english: ["private"] },
+            { chinese: "海盗，盗版的", english: ["pirate"] },
+            { chinese: "乌鸦", english: ["crow"] },
+            { chinese: "王冠", english: ["crown"] },
+            { chinese: "小丑", english: ["clown"] },
+            { chinese: "打瞌睡", english: ["doze"] },
+            { chinese: "一打，十几个", english: ["dozen"] },
+            { chinese: "忧郁", english: ["gloom"] },
+            { chinese: "打扮，梳毛", english: ["groom"] },
+            { chinese: "冲", english: ["rush"] },
+            { chinese: "茂盛的，酒鬼", english: ["lush"] },
+            { chinese: "誓言，发誓", english: ["vow"] },
+            { chinese: "割草", english: ["mow"] },
+            { chinese: "把…归并在一起", english: ["lump"] },
+            { chinese: "灯", english: ["lamp"] },
+            { chinese: "瘸的", english: ["lame"] },
+            { chinese: "羊羔", english: ["lamb"] },
+            { chinese: "茎", english: ["stalk"] },
+            { chinese: "货摊", english: ["stall"] },
+            { chinese: "不新鲜的", english: ["stale"] },
+            { chinese: "打", english: ["strike"] },
+            { chinese: "大步走", english: ["stride"] },
+            { chinese: "乡间小屋", english: ["lodge"] },
+            { chinese: "躲避，花招", english: ["dodge"] },
+            { chinese: "开始，着手", english: ["commence"] },
+            { chinese: "商业", english: ["commerce"] },
+            { chinese: "摇篮", english: ["cradle"] },
+            { chinese: "丑闻", english: ["scandal"] },
+            { chinese: "投票", english: ["vote"] },
+            { chinese: "否决", english: ["veto"] },
+            { chinese: "苗条", english: ["slim"] },
+            { chinese: "贫民窟", english: ["slum"] },
+            { chinese: "汽油", english: ["petrol"] },
+            { chinese: "赞助人", english: ["patron"] },
+            { chinese: "无记名投票", english: ["ballot"] },
+            { chinese: "芭蕾舞", english: ["ballet"] },
+            { chinese: "道德", english: ["moral"] },
+            { chinese: "士气，精神面貌", english: ["morale"] },
+            { chinese: "凡人", english: ["mortal"] },
+            { chinese: "保释金", english: ["bail"] },
+            { chinese: "给…上诱饵", english: ["bait"] },
+            { chinese: "得体", english: ["tact"] },
+            { chinese: "协议", english: ["pact"] },
+            { chinese: "糟糕的", english: ["terrible"] },
+            { chinese: "极好的", english: ["terrific"] },
+            { chinese: "独木舟", english: ["canoe"] },
+            { chinese: "茎，拐杖", english: ["cane"] },
+            { chinese: "起重机，吊车", english: ["crane"] },
+            { chinese: "踏板", english: ["pedal"] },
+            { chinese: "叫卖", english: ["peddle"] },
+            { chinese: "安东尼", english: ["Anthony"] },
+            { chinese: "律师", english: ["attorney"] },
+            { chinese: "扑克牌", english: ["poker"] },
+            { chinese: "捅", english: ["poke"] },
+            { chinese: "香味", english: ["scent"] },
+            { chinese: "憎恨", english: ["recent"] },
+            { chinese: "花费", english: ["expense"] },
+            { chinese: "分配", english: ["dispense"] },
+            { chinese: "隔离", english: ["segregate"] },
+            { chinese: "宣传", english: ["propagate"] },
+            { chinese: "饮料", english: ["beverage"] },
+            { chinese: "仁慈的", english: ["benevolent"] },
+            { chinese: "出生", english: ["born"] },
+            { chinese: "谷仓", english: ["barn"] },
+            { chinese: "实现", english: ["achieve"] },
+            { chinese: "档案", english: ["archive"] },
+            { chinese: "检修，改造", english: ["overhaul"] },
+            { chinese: "祸患，灾难", english: ["havoc"] },
+            { chinese: "环形", english: ["loop"] },
+            { chinese: "抢劫，赃物", english: ["loot"] },
+            { chinese: "合成的", english: ["synthetic"] },
+            { chinese: "综合", english: ["synthesis"] },
+            { chinese: "颤抖", english: ["tremble"] },
+            { chinese: "跌倒，跌落", english: ["tumble"] },
+            { chinese: "目的，利益", english: ["sake"] },
+            { chinese: "浸泡", english: ["soak"] },
+            { chinese: "成功", english: ["success"] },
+            { chinese: "连续的", english: ["successive"] },
+            { chinese: "例子", english: ["instance"] },
+            { chinese: "立场，态度", english: ["stance"] },
+            { chinese: "鬼魂", english: ["haunt"] },
+            { chinese: "打猎", english: ["hunt"] },
+            { chinese: "同时发生", english: ["coincide"] },
+            { chinese: "简洁的", english: ["concise"] },
+            { chinese: "推理", english: ["deduce"] },
+            { chinese: "引诱，勾引", english: ["seduce"] },
+            { chinese: "巡逻", english: ["patrol"] },
+            { chinese: "爱国者", english: ["patriot"] },
+            { chinese: "勤劳的", english: ["industrious"] },
+            { chinese: "本土的", english: ["indigenous"] },
+            { chinese: "减少", english: ["delete"] },
+            { chinese: "大量减少", english: ["deplete"] },
+            { chinese: "抽噎", english: ["sob"] },
+            { chinese: "冷静，严肃", english: ["sober"] },
+            { chinese: "咨询", english: ["consult"] },
+            { chinese: "攻击，袭击", english: ["assault"] },
+            { chinese: "编码", english: ["encode"] },
+            { chinese: "承认", english: ["concede"] },
+            { chinese: "火焰", english: ["blaze"] },
+            { chinese: "奇异的", english: ["bizarre"] },
+            { chinese: "立刻", english: ["immediate"] },
+            { chinese: "调停，调解", english: ["mediate"] },
+            { chinese: "承诺，保证", english: ["promise"] },
+            { chinese: "前提", english: ["premise"] },
+            { chinese: "网格", english: ["grid"] },
+            { chinese: "严肃的", english: ["grim"] },
+            { chinese: "咧嘴大笑", english: ["grin"] },
+            { chinese: "精英", english: ["elite"] },
+            { chinese: "引出，诱出", english: ["elicit"] },
+            { chinese: "铁", english: ["iron"] },
+            { chinese: "讽刺的", english: ["irony"] },
+            { chinese: "责备", english: ["reproach"] },
+            { chinese: "方法", english: ["approach"] },
+            { chinese: "铰链", english: ["hinge"] },
+            { chinese: "混合的", english: ["mingle"] },
+            { chinese: "建造", english: ["erect"] },
+            { chinese: "驱逐，弹出", english: ["eject"] },
+            { chinese: "宁静的", english: ["tranquil"] },
+            { chinese: "短暂的", english: ["transient"] },
+            { chinese: "航天飞机", english: ["shuttle"] },
+            { chinese: "使破灭", english: ["shatter"] },
+            { chinese: "前言", english: ["preface"] },
+            { chinese: "借口", english: ["pretext"] },
+            { chinese: "忍受", english: ["endure"] },
+            { chinese: "公开支持", english: ["endorse"] },
+            { chinese: "引诱", english: ["tempt"] },
+            { chinese: "尝试", english: ["attempt"] },
+            { chinese: "蔑视", english: ["contempt"] },
+            { chinese: "招聘", english: ["recruit"] },
+            { chinese: "反驳", english: ["refute"] },
+            { chinese: "召唤", english: ["summon"] },
+            { chinese: "山顶，顶峰", english: ["summit"] },
+            { chinese: "鞭打", english: ["whip"] },
+            { chinese: "敬奉", english: ["worship"] },
+            { chinese: "人质", english: ["hostage"] },
+            { chinese: "敌意的", english: ["hostile"] },
+            { chinese: "居住", english: ["inhabit"] },
+            { chinese: "抑制", english: ["inhibit"] },
+            { chinese: "质感", english: ["texture"] },
+            { chinese: "牧场", english: ["pasture"] },
+            { chinese: "模仿", english: ["imitate"] },
+            { chinese: "恐吓，威胁", english: ["intimidate"] },
+            { chinese: "亲密的", english: ["intimate"] },
+            { chinese: "辱骂，控告", english: ["insult"] },
+            { chinese: "使隔热", english: ["insulate"] },
+            { chinese: "背景", english: ["context"] },
+            { chinese: "声称，主张，竞争", english: ["contend"] },
+            { chinese: "驯化", english: ["tame"] },
+            { chinese: "压实", english: ["tamp"] },
+            { chinese: "瘸的", english: ["lame"] },
+            { chinese: "灯", english: ["lamp"] },
+            { chinese: "祈祷", english: ["pray"] },
+            { chinese: "捕食，猎物", english: ["prey"] },
+            { chinese: "天堂，乐土", english: ["paradise"] },
+            { chinese: "使处于危险境地", english: ["jeopardize"] },
+            { chinese: "继承", english: ["inherit"] },
+            { chinese: "兽群，把…聚到一起", english: ["herd"] },
+            { chinese: "阻止", english: ["prevent"] },
+            { chinese: "流行的", english: ["prevalent"] },
+            { chinese: "散发", english: ["emit"] },
+            { chinese: "省略，遗留", english: ["omit"] },
+            { chinese: "增强", english: ["enhanced"] },
+            { chinese: "社会", english: ["society"] },
+            { chinese: "尽管", english: ["despite"] },
+            { chinese: "大量的", english: ["numerous"] },
+            { chinese: "追求", english: ["pursue"] },
+            { chinese: "影响", english: ["influence"] },
+            { chinese: "后代", english: ["descendants"] },
+            { chinese: "重要的", english: ["crucial"] },
+            { chinese: "信息", english: ["information"] },
+            { chinese: "城市化", english: ["urbanization"] },
+            { chinese: "引入", english: ["introduce"] },
+            { chinese: "危机", english: ["crisis"] },
+            { chinese: "其余的人", english: ["rest"] },
+            { chinese: "优势", english: ["edge"] }
+        ];
+
+        // ==================== 状态管理 ====================
+        let currentMode = 'phrase'; // 'phrase' 或 'vocabulary'
+        let currentIndex = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let isStarted = false;
+        let isChecked = false;
+
+        // ==================== 断点续练功能 ====================
+        
+        // 加载保存的进度
+        function loadProgress() {
+            const savedIndex = localStorage.getItem(`translation_${currentMode}_index`);
+            if (savedIndex !== null) {
+                currentIndex = parseInt(savedIndex);
+                console.log(`已恢复${currentMode === 'phrase' ? '词组' : '词汇'}练习进度：第${currentIndex + 1}题`);
+            }
+        }
+        
+        // 保存当前进度
+        function saveProgress() {
+            localStorage.setItem(`translation_${currentMode}_index`, currentIndex);
+        }
+        
+        // 清除进度
+        function clearProgress() {
+            if (confirm('确定要清除所有学习进度吗？')) {
+                localStorage.removeItem('translation_phrase_index');
+                localStorage.removeItem('translation_vocabulary_index');
+                currentIndex = 0;
+                correctCount = 0;
+                wrongCount = 0;
+                updateStats();
+                updateProgress();
+                alert('进度已清除！');
+            }
+        }
+
+        // ==================== 核心功能 ====================
+
+        // 切换模式
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮样式
+            const phraseBtn = document.getElementById('phraseBtn');
+            const vocabularyBtn = document.getElementById('vocabularyBtn');
+            
+            if (mode === 'phrase') {
+                phraseBtn.className = 'px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold text-lg shadow-lg btn-hover w-full md:w-auto';
+                vocabularyBtn.className = 'px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-bold text-lg shadow btn-hover w-full md:w-auto';
+            } else {
+                vocabularyBtn.className = 'px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg btn-hover w-full md:w-auto';
+                phraseBtn.className = 'px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-bold text-lg shadow btn-hover w-full md:w-auto';
+            }
+            
+            // 重置状态并加载进度
+            resetState();
+            loadProgress();
+            updateStats();
+        }
+
+        // 重置状态
+        function resetState() {
+            currentIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            isStarted = false;
+            isChecked = false;
+            
+            document.getElementById('chineseDisplay').textContent = '点击开始按钮开始练习';
+            document.getElementById('userInput').value = '';
+            document.getElementById('userInput').disabled = true;
+            document.getElementById('feedbackArea').classList.add('hidden');
+            document.getElementById('multiAnswerHint').classList.add('hidden');
+            document.getElementById('hintArea').classList.add('hidden'); // 隐藏提示区域
+            
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('hintBtn').classList.add('hidden'); // 隐藏提示按钮
+            document.getElementById('checkBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('showAnswerBtn').classList.add('hidden');
+        }
+
+        // 开始练习
+        function startPractice() {
+            isStarted = true;
+            currentIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('hintBtn').classList.remove('hidden'); // 显示提示按钮
+            document.getElementById('checkBtn').classList.remove('hidden');
+            document.getElementById('userInput').disabled = false;
+            document.getElementById('userInput').focus();
+            
+            showCurrentQuestion();
+            updateStats();
+        }
+
+        // 显示当前题目
+        function showCurrentQuestion() {
+            const data = getCurrentData();
+            
+            if (currentIndex >= data.length) {
+                showCompletion();
+                return;
+            }
+            
+            const item = data[currentIndex];
+            document.getElementById('chineseDisplay').textContent = item.chinese;
+            document.getElementById('userInput').value = '';
+            document.getElementById('feedbackArea').classList.add('hidden');
+            document.getElementById('hintArea').classList.add('hidden'); // 隐藏提示区域
+            isChecked = false;
+            
+            // 检查是否是多答案题目
+            const multiAnswerHint = document.getElementById('multiAnswerHint');
+            if (currentMode === 'vocabulary' && item.english.length > 1) {
+                multiAnswerHint.classList.remove('hidden');
+            } else {
+                multiAnswerHint.classList.add('hidden');
+            }
+            
+            updateStats(); // 更新题号
+            updateProgress();
+        }
+
+        // 获取当前数据
+        function getCurrentData() {
+            return currentMode === 'phrase' ? phraseData : vocabularyData;
+        }
+
+        // 检查答案
+        function checkAnswer() {
+            if (!isStarted || isChecked) return;
+            
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                alert('请先输入答案！');
+                return;
+            }
+            
+            const data = getCurrentData();
+            const currentItem = data[currentIndex];
+            let isCorrect = false;
+            
+            if (currentMode === 'phrase') {
+                // 词组检测：忽略空格和大小写
+                const normalizedUser = userInput.toLowerCase().replace(/\s+/g, '');
+                const normalizedAnswer = currentItem.english.toLowerCase().replace(/\s+/g, '');
+                isCorrect = normalizedUser === normalizedAnswer;
+            } else {
+                // 词汇检测：支持多个答案
+                const userAnswers = userInput.split(/[,，\s]+/).map(a => a.toLowerCase().trim()).filter(a => a);
+                const correctAnswers = currentItem.english.map(a => a.toLowerCase());
+                
+                // 检查用户输入的答案是否包含所有正确答案
+                isCorrect = correctAnswers.every(answer => 
+                    userAnswers.some(userAns => userAns === answer)
+                ) && userAnswers.length === correctAnswers.length;
+            }
+            
+            isChecked = true;
+            
+            // 显示反馈
+            showFeedback(isCorrect, currentItem);
+            
+            // 更新统计
+            if (isCorrect) {
+                correctCount++;
+            } else {
+                wrongCount++;
+            }
+            
+            updateStats();
+            
+            // 切换按钮
+            document.getElementById('checkBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+            document.getElementById('showAnswerBtn').classList.remove('hidden');
+        }
+
+        // 显示反馈
+        function showFeedback(isCorrect, item) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            const feedbackContent = document.getElementById('feedbackContent');
+            
+            feedbackArea.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'correct-answer', 'wrong-answer');
+            
+            if (isCorrect) {
+                feedbackArea.classList.add('bg-green-100', 'correct-answer');
+                feedbackContent.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-8 h-8 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <div>
+                            <div class="text-lg font-bold text-green-800">回答正确！太棒了！🎉</div>
+                            ${currentMode === 'phrase' ? 
+                                `<div class="text-green-700 mt-1">正确答案：<strong>${item.english}</strong></div>` :
+                                `<div class="text-green-700 mt-1">正确答案：<strong>${item.english.join(', ')}</strong></div>`
+                            }
+                        </div>
+                    </div>
+                `;
+            } else {
+                feedbackArea.classList.add('bg-red-100', 'wrong-answer');
+                feedbackContent.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-8 h-8 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                        <div>
+                            <div class="text-lg font-bold text-red-800">回答错误！继续努力！💪</div>
+                            ${currentMode === 'phrase' ? 
+                                `<div class="text-red-700 mt-1">正确答案：<strong>${item.english}</strong></div>` :
+                                `<div class="text-red-700 mt-1">正确答案：<strong>${item.english.join(', ')}</strong></div>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 查看答案
+        function showAnswer() {
+            const data = getCurrentData();
+            const currentItem = data[currentIndex];
+            
+            const feedbackArea = document.getElementById('feedbackArea');
+            const feedbackContent = document.getElementById('feedbackContent');
+            
+            feedbackArea.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+            feedbackArea.classList.add('bg-blue-100');
+            
+            feedbackContent.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <div>
+                        <div class="text-lg font-bold text-blue-800">查看答案</div>
+                        ${currentMode === 'phrase' ? 
+                            `<div class="text-blue-700 mt-1">正确答案：<strong>${currentItem.english}</strong></div>` :
+                            `<div class="text-blue-700 mt-1">正确答案：<strong>${currentItem.english.join(', ')}</strong></div>`
+                        }
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('checkBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        // 下一题
+        function nextQuestion() {
+            currentIndex++;
+            saveProgress(); // 保存进度
+            showCurrentQuestion();
+            
+            document.getElementById('checkBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('showAnswerBtn').classList.add('hidden');
+            document.getElementById('userInput').focus();
+        }
+
+        // ==================== 智能提示功能 ====================
+        
+        // 显示提示
+        function showHint() {
+            const data = getCurrentData();
+            const currentItem = data[currentIndex];
+            
+            if (!currentItem) return;
+            
+            let hintText = '';
+            
+            if (currentMode === 'phrase') {
+                // 词组模式：显示首字母和长度
+                const answer = currentItem.english;
+                const firstLetter = answer.charAt(0).toUpperCase();
+                const length = answer.length;
+                const wordCount = answer.split(' ').length;
+                
+                hintText = `
+                    <div class="space-y-2">
+                        <div><strong>首字母：</strong>${firstLetter}</div>
+                        <div><strong>总长度：</strong>${length} 个字符（含空格）</div>
+                        <div><strong>单词数：</strong>${wordCount} 个单词</div>
+                    </div>
+                `;
+            } else {
+                // 词汇模式：显示每个答案的提示
+                const answers = currentItem.english;
+                hintText = '<div class="space-y-3">';
+                
+                answers.forEach((answer, index) => {
+                    const firstLetter = answer.charAt(0).toUpperCase();
+                    const length = answer.length;
+                    const maskedAnswer = maskWord(answer);
+                    
+                    hintText += `
+                        <div class="p-3 bg-white rounded-lg border border-indigo-200">
+                            <div class="text-sm text-indigo-600 mb-1">答案 ${index + 1}：</div>
+                            <div class="flex items-center space-x-4">
+                                <span class="font-bold text-indigo-900">${maskedAnswer}</span>
+                                <span class="text-sm text-indigo-500">(${length}个字母，首字母: ${firstLetter})</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                hintText += '</div>';
+            }
+            
+            document.getElementById('hintContent').innerHTML = hintText;
+            document.getElementById('hintArea').classList.remove('hidden');
+        }
+        
+        // 隐藏提示
+        function hideHint() {
+            document.getElementById('hintArea').classList.add('hidden');
+        }
+        
+        // 遮蔽单词（显示部分字母）
+        function maskWord(word) {
+            const letters = word.split('');
+            const length = letters.length;
+            
+            if (length <= 3) {
+                // 短单词：只显示首字母
+                return letters[0] + '_'.repeat(length - 1);
+            } else if (length <= 6) {
+                // 中等单词：显示首尾字母
+                return letters[0] + '_'.repeat(length - 2) + letters[length - 1];
+            } else {
+                // 长单词：显示首字母、中间一个字母和尾字母
+                const midIndex = Math.floor(length / 2);
+                let result = letters[0];
+                for (let i = 1; i < length - 1; i++) {
+                    result += (i === midIndex) ? letters[i] : '_';
+                }
+                result += letters[length - 1];
+                return result;
+            }
+        }
+
+        // 显示完成界面
+        function showCompletion() {
+            const total = correctCount + wrongCount;
+            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+            
+            document.getElementById('finalTotal').textContent = total;
+            document.getElementById('finalCorrect').textContent = correctCount;
+            document.getElementById('finalWrong').textContent = wrongCount;
+            document.getElementById('finalAccuracy').textContent = accuracy + '%';
+            
+            document.getElementById('completionModal').classList.remove('hidden');
+        }
+
+        // 重新开始
+        function restartPractice() {
+            document.getElementById('completionModal').classList.add('hidden');
+            resetState();
+            updateStats();
+        }
+
+        // 更新统计
+        function updateStats() {
+            const data = getCurrentData();
+            const total = correctCount + wrongCount;
+            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+            
+            document.getElementById('totalCount').textContent = data.length;
+            document.getElementById('currentQuestionNum').textContent = currentIndex + 1;
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('wrongCount').textContent = wrongCount;
+            document.getElementById('accuracyRate').textContent = accuracy + '%';
+        }
+
+        // 更新进度
+        function updateProgress() {
+            const data = getCurrentData();
+            const progress = data.length > 0 ? ((currentIndex + 1) / data.length) * 100 : 0;
+            
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${currentIndex + 1}/${data.length}`;
+        }
+
+        // 键盘事件监听
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (!isStarted) {
+                    startPractice();
+                } else if (!isChecked) {
+                    checkAnswer();
+                } else {
+                    nextQuestion();
+                }
+            }
+        });
+
+        // 初始化
+        loadProgress(); // 加载保存的进度
+        updateStats();
+    </script>
+</body>
+</html>
