@@ -396,6 +396,11 @@
                     ✓ 检查答案
                 </button>
                 
+                <button onclick="markAsForgotten()" id="forgottenBtn" 
+                    class="hidden px-6 py-3.5 md:px-8 md:py-4 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
+                    😕 遗忘了（显示答案）
+                </button>
+                
                 <button onclick="nextQuestion()" id="nextBtn" 
                     class="hidden px-6 py-3.5 md:px-8 md:py-4 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
                     ➡️ 下一题
@@ -954,6 +959,7 @@
             document.getElementById('startBtn').classList.add('hidden');
             document.getElementById('hintBtn').classList.remove('hidden'); // 显示提示按钮
             document.getElementById('checkBtn').classList.remove('hidden');
+            document.getElementById('forgottenBtn').classList.remove('hidden'); // 显示遗忘按钮
             document.getElementById('userInput').disabled = false;
             document.getElementById('userInput').focus();
             
@@ -977,6 +983,7 @@
             document.getElementById('hintArea').classList.remove('show'); // 隐藏提示区域
             document.getElementById('level2HintContent').classList.add('hidden'); // 隐藏二级提示
             document.getElementById('level2HintBtn').classList.remove('hidden'); // 显示二级提示按钮
+            document.getElementById('forgottenBtn').classList.remove('hidden'); // 显示遗忘按钮
             isChecked = false;
             
             // 检查是否是多答案题目
@@ -1054,6 +1061,8 @@
             
             // 切换按钮
             document.getElementById('checkBtn').classList.add('hidden');
+            document.getElementById('forgottenBtn').classList.add('hidden');
+            document.getElementById('hintBtn').classList.add('hidden');
             document.getElementById('nextBtn').classList.remove('hidden');
             document.getElementById('showAnswerBtn').classList.remove('hidden');
         }
@@ -1100,6 +1109,33 @@
                     </div>
                 `;
             }
+        }
+
+        // 标记为遗忘（直接显示答案并计为错误）
+        function markAsForgotten() {
+            if (!isStarted || isChecked) return;
+            
+            const data = getCurrentData();
+            const currentItem = data[currentIndex];
+            
+            if (!currentItem) return;
+            
+            // 增加错误计数
+            wrongCount++;
+            isChecked = true;
+            
+            // 显示反馈
+            showFeedback(false, currentItem);
+            
+            // 更新统计
+            updateStats();
+            saveProgress();
+            
+            // 切换按钮
+            document.getElementById('checkBtn').classList.add('hidden');
+            document.getElementById('forgottenBtn').classList.add('hidden');
+            document.getElementById('hintBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
         }
 
         // 查看答案
