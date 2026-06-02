@@ -8,8 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
         }
@@ -58,36 +58,36 @@
         
         @keyframes correctPulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.02); }
         }
         
         @keyframes wrongShake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
         
         .progress-bar {
-            transition: width 0.3s ease-in-out;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .fade-in {
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
         .btn-hover {
-            transition: all 0.3s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             touch-action: manipulation;
         }
         
         .btn-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
         }
         
         .btn-hover:active {
@@ -95,7 +95,8 @@
         }
         
         .input-focus:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            border-color: #6366f1;
         }
         
         /* 防止移动端双击缩放 */
@@ -103,66 +104,93 @@
             touch-action: manipulation;
         }
         
-        /* 学术风格卡片 */
-        .academic-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        /* 优雅的卡片样式 */
+        .elegant-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
-        .academic-header {
+        .section-title {
             color: #1e293b;
             font-weight: 600;
+            letter-spacing: -0.02em;
         }
         
-        .academic-primary {
-            background: #3b82f6;
+        .accent-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
         }
         
-        .academic-primary:hover {
-            background: #2563eb;
+        .accent-blue:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
         
-        .academic-success {
-            background: #10b981;
+        .accent-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
         }
         
-        .academic-success:hover {
-            background: #059669;
+        .accent-green:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
         }
         
-        .academic-warning {
-            background: #f59e0b;
+        .accent-purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
             color: white;
         }
         
-        .academic-info {
-            background: #6366f1;
+        .accent-purple:hover {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        }
+        
+        .accent-amber {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
+        }
+        
+        .accent-amber:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        }
+        
+        .stat-number {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+        }
+        
+        .question-display {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .question-display:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
     </style>
 </head>
 <body class="p-3 md:p-8">
     <div class="max-w-6xl mx-auto">
         <!-- 头部 -->
-        <header class="text-center mb-4 md:mb-8">
-            <h1 class="text-2xl md:text-4xl font-bold text-slate-800 mb-2 academic-header">
+        <header class="text-center mb-6 md:mb-10">
+            <h1 class="text-3xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg section-title">
                 📚 英语翻译检测系统
             </h1>
-            <p class="text-slate-600 text-sm md:text-base">词组与词汇拼写练习平台</p>
+            <p class="text-white/90 text-sm md:text-base font-medium">词组与词汇拼写练习平台</p>
         </header>
 
         <!-- 模式选择 -->
-        <div class="academic-card rounded-xl p-4 md:p-6 mb-4 md:mb-6 fade-in mobile-padding">
+        <div class="elegant-card p-5 md:p-7 mb-5 md:mb-8 fade-in mobile-padding">
             <div class="flex flex-col md:flex-row gap-3 md:gap-4 justify-center items-center">
                 <button onclick="switchMode('phrase')" id="phraseBtn" 
-                    class="px-6 py-3 md:px-8 md:py-4 academic-primary rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover w-full mobile-btn">
+                    class="px-6 py-3.5 md:px-8 md:py-4 accent-blue rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover w-full mobile-btn">
                     📝 词组检测
                 </button>
                 <button onclick="switchMode('vocabulary')" id="vocabularyBtn" 
-                    class="px-6 py-3 md:px-8 md:py-4 bg-slate-200 text-slate-700 rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover w-full mobile-btn">
+                    class="px-6 py-3.5 md:px-8 md:py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-base md:text-lg shadow-sm btn-hover w-full mobile-btn border border-slate-200">
                     📖 词汇检测
                 </button>
             </div>
@@ -175,61 +203,61 @@
                         <!-- 分组按钮将通过JavaScript动态生成 -->
                     </div>
                     <div class="mt-3 text-xs text-slate-500">
-                        当前选择：<span id="currentGroup" class="font-semibold text-blue-600">全部题目</span>
+                        当前选择：<span id="currentGroup" class="font-semibold text-indigo-600">全部题目</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- 统计信息 -->
-        <div class="academic-card rounded-xl p-4 md:p-6 mb-4 md:mb-6 fade-in mobile-padding">
-            <div class="grid grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+        <div class="elegant-card p-5 md:p-7 mb-5 md:mb-8 fade-in mobile-padding">
+            <div class="grid grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
                 <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-blue-600" id="totalCount">0</div>
-                    <div class="text-slate-600 text-xs md:text-sm mt-1">总题数</div>
+                    <div class="text-2xl md:text-3xl font-bold text-blue-600 stat-number" id="totalCount">0</div>
+                    <div class="text-slate-600 text-xs md:text-sm mt-1.5 font-medium">总题数</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-indigo-600" id="currentQuestionNum">0</div>
-                    <div class="text-slate-600 text-xs md:text-sm mt-1">当前题号</div>
+                    <div class="text-2xl md:text-3xl font-bold text-indigo-600 stat-number" id="currentQuestionNum">0</div>
+                    <div class="text-slate-600 text-xs md:text-sm mt-1.5 font-medium">当前题号</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-emerald-600" id="correctCount">0</div>
-                    <div class="text-slate-600 text-xs md:text-sm mt-1">正确</div>
+                    <div class="text-2xl md:text-3xl font-bold text-emerald-600 stat-number" id="correctCount">0</div>
+                    <div class="text-slate-600 text-xs md:text-sm mt-1.5 font-medium">正确</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-rose-600" id="wrongCount">0</div>
-                    <div class="text-slate-600 text-xs md:text-sm mt-1">错误</div>
+                    <div class="text-2xl md:text-3xl font-bold text-rose-600 stat-number" id="wrongCount">0</div>
+                    <div class="text-slate-600 text-xs md:text-sm mt-1.5 font-medium">错误</div>
                 </div>
                 <div class="text-center col-span-3 md:col-span-1">
-                    <div class="text-2xl md:text-3xl font-bold text-purple-600" id="accuracyRate">0%</div>
-                    <div class="text-slate-600 text-xs md:text-sm mt-1">正确率</div>
+                    <div class="text-2xl md:text-3xl font-bold text-purple-600 stat-number" id="accuracyRate">0%</div>
+                    <div class="text-slate-600 text-xs md:text-sm mt-1.5 font-medium">正确率</div>
                 </div>
             </div>
             
             <!-- 进度条 -->
-            <div class="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                <button onclick="clearProgress()" class="px-3 py-2 md:px-4 md:py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors text-xs md:text-sm w-full md:w-auto mobile-btn">
+            <div class="mt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <button onclick="clearProgress()" class="px-4 py-2.5 md:px-5 md:py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-all text-xs md:text-sm w-full md:w-auto mobile-btn border border-slate-200">
                     🗑️ 清除进度
                 </button>
                 <div class="flex-1 w-full">
-                    <div class="flex justify-between text-xs md:text-sm text-slate-600 mb-2">
-                        <span>进度</span>
+                    <div class="flex justify-between text-xs md:text-sm text-slate-600 mb-2.5 font-medium">
+                        <span>练习进度</span>
                         <span id="progressText">0/0</span>
                     </div>
-                    <div class="w-full bg-slate-200 rounded-full h-2.5 md:h-3">
-                        <div id="progressBar" class="progress-bar bg-blue-600 h-2.5 md:h-3 rounded-full" style="width: 0%"></div>
+                    <div class="w-full bg-slate-200 rounded-full h-3 md:h-3.5 overflow-hidden">
+                        <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-600 h-3 md:h-3.5 rounded-full shadow-sm" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- 主练习区域 -->
-        <div class="academic-card rounded-xl p-4 md:p-8 fade-in mobile-padding">
+        <div class="elegant-card p-6 md:p-10 fade-in mobile-padding">
             <!-- 题目显示区域 -->
-            <div class="mb-6 md:mb-8">
-                <div class="text-center mb-4 md:mb-6">
-                    <div class="text-xs md:text-sm text-slate-500 mb-2">请根据中文含义拼写英文</div>
-                    <div id="chineseDisplay" class="text-xl md:text-3xl font-bold text-slate-800 py-6 md:py-8 px-3 md:px-4 bg-slate-50 rounded-lg border border-slate-200 mobile-text-3xl">
+            <div class="mb-8 md:mb-10">
+                <div class="text-center mb-5 md:mb-7">
+                    <div class="text-xs md:text-sm text-slate-500 mb-3 font-medium">请根据中文含义拼写英文</div>
+                    <div id="chineseDisplay" class="text-xl md:text-4xl font-bold text-slate-800 py-8 md:py-10 px-4 md:px-6 question-display rounded-2xl mobile-text-3xl">
                         点击开始按钮开始练习
                     </div>
                     
@@ -274,51 +302,51 @@
             </div>
 
             <!-- 输入区域 -->
-            <div class="mb-4 md:mb-6">
-                <label class="block text-slate-700 font-medium mb-2 md:mb-3 text-base md:text-lg">
+            <div class="mb-6 md:mb-8">
+                <label class="block text-slate-700 font-semibold mb-3 text-base md:text-lg">
                     请输入英文：
                 </label>
                 <input 
                     type="text" 
                     id="userInput" 
-                    class="w-full px-4 py-3 md:px-6 md:py-4 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 input-focus text-lg md:text-xl transition-all mobile-input"
+                    class="w-full px-5 py-4 md:px-6 md:py-5 border-2 border-slate-300 rounded-xl focus:outline-none input-focus text-lg md:text-xl transition-all mobile-input bg-white"
                     placeholder="在此输入英文..."
                     disabled
                 >
-                <div class="mt-2 md:mt-3 text-xs md:text-sm text-slate-500">
+                <div class="mt-3 text-xs md:text-sm text-slate-500 font-medium">
                     💡 提示：词组检测可忽略空格和大小写；词汇检测为单个单词拼写
                 </div>
             </div>
 
             <!-- 反馈区域 -->
-            <div id="feedbackArea" class="hidden mb-4 md:mb-6 p-4 md:p-6 rounded-lg fade-in">
+            <div id="feedbackArea" class="hidden mb-6 md:mb-8 p-5 md:p-7 rounded-xl fade-in">
                 <div id="feedbackContent"></div>
             </div>
 
             <!-- 按钮区域 -->
             <div class="flex flex-col gap-3 md:gap-4">
                 <button onclick="startPractice()" id="startBtn" 
-                    class="px-6 py-3 md:px-8 md:py-4 academic-success rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover mobile-btn">
+                    class="px-6 py-3.5 md:px-8 md:py-4 accent-green rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
                     ▶️ 开始练习
                 </button>
                 
                 <button onclick="showHint()" id="hintBtn" 
-                    class="hidden px-6 py-3 md:px-6 md:py-4 academic-info rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover mobile-btn">
+                    class="hidden px-6 py-3.5 md:px-6 md:py-4 accent-purple rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
                     💡 显示提示
                 </button>
                 
                 <button onclick="checkAnswer()" id="checkBtn" 
-                    class="hidden px-6 py-3 md:px-8 md:py-4 academic-primary rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover mobile-btn">
+                    class="hidden px-6 py-3.5 md:px-8 md:py-4 accent-blue rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
                     ✓ 检查答案
                 </button>
                 
                 <button onclick="nextQuestion()" id="nextBtn" 
-                    class="hidden px-6 py-3 md:px-8 md:py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover mobile-btn">
+                    class="hidden px-6 py-3.5 md:px-8 md:py-4 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
                     ➡️ 下一题
                 </button>
                 
                 <button onclick="showAnswer()" id="showAnswerBtn" 
-                    class="hidden px-6 py-3 md:px-8 md:py-4 academic-warning rounded-lg font-semibold text-base md:text-lg shadow-sm btn-hover mobile-btn">
+                    class="hidden px-6 py-3.5 md:px-8 md:py-4 accent-amber rounded-xl font-semibold text-base md:text-lg shadow-md btn-hover mobile-btn">
                     👀 查看答案
                 </button>
             </div>
