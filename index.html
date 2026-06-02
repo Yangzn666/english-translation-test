@@ -206,6 +206,16 @@
             color: #78350f;
             line-height: 1.6;
         }
+        
+        .example-blank {
+            display: inline-block;
+            min-width: 80px;
+            padding: 0 8px;
+            border-bottom: 2px dashed #f59e0b;
+            color: #dc2626;
+            font-weight: 600;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="p-3 md:p-8">
@@ -434,26 +444,26 @@
         
         // 词组数据（来自翻译练习 - 完整版130题）
         const phraseData = [
-            { chinese: "利用，占便宜", english: "take advantage of", example: "我们应该______这次机会来提高自己。" },
-            { chinese: "引起，导致", english: "give rise to", example: "这个问题可能会______更多的争议。" },
-            { chinese: "应对，处理", english: "cope with", example: "我们需要学会如何______压力。" },
-            { chinese: "归因于", english: "be attributed to", example: "成功可以______他的努力和坚持。" },
-            { chinese: "致力于，承诺", english: "be committed to", example: "公司______提供高质量的服务。" },
-            { chinese: "有助于，有利于", english: "be conducive to", example: "良好的环境______学习。" },
-            { chinese: "由...组成", english: "be composed of", example: "这个团队______五名成员。" },
-            { chinese: "致力于，专用于", english: "be dedicated to", example: "这本书______我的父母。" },
-            { chinese: "缺乏", english: "be deficient in", example: "这种食物______维生素C。" },
-            { chinese: "有权，有资格", english: "be entitled to", example: "每个公民都______受教育。" },
-            { chinese: "易于，倾向于", english: "be prone to", example: "老年人______患这种疾病。" },
-            { chinese: "在...方面，就...而言", english: "in terms of", example: "______质量，这个产品很好。" },
-            { chinese: "在...中起关键作用", english: "play a crucial role in", example: "教育______社会发展中。" },
-            { chinese: "有影响，起作用", english: "make a difference", example: "每个人的努力都能______。" },
-            { chinese: "必然，注定", english: "be bound to", example: "困难______会出现的。" },
-            { chinese: "对...表示怀疑", english: "cast doubt on", example: "这个发现______之前的理论。" },
-            { chinese: "意识到，知道", english: "be aware of", example: "你应该______潜在的风险。" },
-            { chinese: "可能", english: "be likely to", example: "他______会迟到。" },
-            { chinese: "对...产生影响", english: "have an impact on", example: "政策变化会______经济。" },
-            { chinese: "配备有", english: "be equipped with", example: "这辆车______先进的安全系统。" },
+            { chinese: "利用，占便宜", english: "take advantage of", example: "We should ______ this opportunity to improve ourselves." },
+            { chinese: "引起，导致", english: "give rise to", example: "This issue may ______ more controversy." },
+            { chinese: "应对，处理", english: "cope with", example: "We need to learn how to ______ stress." },
+            { chinese: "归因于", english: "be attributed to", example: "Success can ______ his hard work and persistence." },
+            { chinese: "致力于，承诺", english: "be committed to", example: "The company is ______ providing high-quality services." },
+            { chinese: "有助于，有利于", english: "be conducive to", example: "A good environment is ______ learning." },
+            { chinese: "由...组成", english: "be composed of", example: "This team ______ five members." },
+            { chinese: "致力于，专用于", english: "be dedicated to", example: "This book is ______ my parents." },
+            { chinese: "缺乏", english: "be deficient in", example: "This food is ______ vitamin C." },
+            { chinese: "有权，有资格", english: "be entitled to", example: "Every citizen is ______ education." },
+            { chinese: "易于，倾向于", english: "be prone to", example: "Elderly people are ______ this disease." },
+            { chinese: "在...方面，就...而言", english: "in terms of", example: "______ quality, this product is excellent." },
+            { chinese: "在...中起关键作用", english: "play a crucial role in", example: "Education ______ social development." },
+            { chinese: "有影响，起作用", english: "make a difference", example: "Everyone's efforts can ______." },
+            { chinese: "必然，注定", english: "be bound to", example: "Difficulties ______ appear." },
+            { chinese: "对...表示怀疑", english: "cast doubt on", example: "This discovery ______ the previous theory." },
+            { chinese: "意识到，知道", english: "be aware of", example: "You should ______ the potential risks." },
+            { chinese: "可能", english: "be likely to", example: "He ______ be late." },
+            { chinese: "对...产生影响", english: "have an impact on", example: "Policy changes will ______ the economy." },
+            { chinese: "配备有", english: "be equipped with", example: "This car is ______ advanced safety systems." },
             { chinese: "促进，推进", english: "promote" },
             { chinese: "消除，排除", english: "eliminate" },
             { chinese: "强调", english: "emphasize" },
@@ -981,7 +991,9 @@
             const exampleArea = document.getElementById('exampleArea');
             const exampleText = document.getElementById('exampleText');
             if (item.example) {
-                exampleText.textContent = item.example;
+                // 将 ______ 替换为带样式的中文占位符
+                const formattedExample = item.example.replace(/_{3,}/g, '<span class="example-blank">(此处填空)</span>');
+                exampleText.innerHTML = formattedExample;
                 exampleArea.classList.remove('hidden');
             } else {
                 exampleArea.classList.add('hidden');
