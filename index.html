@@ -979,10 +979,25 @@
             let isCorrect = false;
             
             if (currentMode === 'phrase') {
-                // 词组检测：忽略空格和大小写
-                const normalizedUser = userInput.toLowerCase().replace(/\s+/g, '');
-                const normalizedAnswer = currentItem.english.toLowerCase().replace(/\s+/g, '');
-                isCorrect = normalizedUser === normalizedAnswer;
+                // 词组检测：支持多个答案（用 / 分隔）
+                const normalizedUser = userInput.toLowerCase().trim();
+                
+                // 检查是否有多个答案（用 / 分隔）
+                if (currentItem.english.includes('/')) {
+                    // 分割多个答案
+                    const answers = currentItem.english.split('/').map(a => a.toLowerCase().trim());
+                    // 检查用户输入是否匹配其中任何一个答案
+                    isCorrect = answers.some(answer => {
+                        const normalizedAnswer = answer.replace(/\s+/g, '');
+                        const normalizedInput = normalizedUser.replace(/\s+/g, '');
+                        return normalizedInput === normalizedAnswer;
+                    });
+                } else {
+                    // 单个答案
+                    const normalizedAnswer = currentItem.english.toLowerCase().replace(/\s+/g, '');
+                    const normalizedInput = normalizedUser.replace(/\s+/g, '');
+                    isCorrect = normalizedInput === normalizedAnswer;
+                }
             } else {
                 // 词汇检测：支持多个答案
                 const userAnswers = userInput.split(/[,，\s]+/).map(a => a.toLowerCase().trim()).filter(a => a);
