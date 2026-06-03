@@ -246,12 +246,33 @@
             <!-- 分组选择区域 -->
             <div id="groupSelection" class="hidden mt-6 pt-6 border-t border-slate-200">
                 <div class="text-center mb-4">
-                    <div class="text-sm md:text-base text-slate-700 font-medium mb-3">📋 选择题目分组（每组15题）</div>
+                    <div class="text-sm md:text-base text-slate-700 font-medium mb-3">📋 选择题目分组（每组20题）</div>
                     <div id="groupButtons" class="flex flex-wrap gap-2 justify-center">
                         <!-- 分组按钮将通过JavaScript动态生成 -->
                     </div>
                     <div class="mt-3 text-xs text-slate-500">
                         当前选择：<span id="currentGroup" class="font-semibold text-indigo-600">全部题目</span>
+                    </div>
+                    
+                    <!-- 起始题号选择 -->
+                    <div class="mt-4 pt-4 border-t border-slate-200">
+                        <div class="text-sm text-slate-700 font-medium mb-2">🎯 从第几题开始？</div>
+                        <div class="flex items-center justify-center gap-2">
+                            <input 
+                                type="number" 
+                                id="startQuestionInput" 
+                                min="1" 
+                                max="80" 
+                                value="1"
+                                class="w-20 px-3 py-2 border-2 border-slate-300 rounded-lg focus:outline-none input-focus text-center"
+                            >
+                            <button onclick="setStartQuestion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
+                                设置
+                            </button>
+                        </div>
+                        <div class="mt-2 text-xs text-slate-500">
+                            当前起始题号：<span id="currentStartQuestion" class="font-semibold text-indigo-600">第1题</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -725,7 +746,8 @@
         let isStarted = false;
         let isChecked = false;
         let selectedGroup = 'all'; // 'all' 或组号 (0, 1, 2...)
-        const GROUP_SIZE = 15; // 每组题目数量
+        const GROUP_SIZE = 20; // 每组题目数量
+        let startQuestion = 0; // 起始题号
 
         // ==================== 断点续练功能 ====================
         
@@ -733,10 +755,18 @@
         function loadProgress() {
             const savedIndex = localStorage.getItem(`translation_${currentMode}_index`);
             const savedGroup = localStorage.getItem(`translation_${currentMode}_group`);
+            const savedStart = localStorage.getItem(`translation_${currentMode}_start`);
             
             if (savedGroup !== null) {
                 selectedGroup = savedGroup === 'all' ? 'all' : parseInt(savedGroup);
                 console.log(`已恢复${currentMode === 'phrase' ? '词组' : '词汇'}练习分组：${selectedGroup === 'all' ? '全部' : '第' + (selectedGroup + 1) + '组'}`);
+            }
+            
+            if (savedStart !== null) {
+                startQuestion = parseInt(savedStart);
+                document.getElementById('currentStartQuestion').textContent = `第${startQuestion + 1}题`;
+                document.getElementById('startQuestionInput').value = startQuestion + 1;
+                console.log(`已恢复起始题号：第${startQuestion + 1}题`);
             }
             
             if (savedIndex !== null) {
@@ -765,6 +795,48 @@
         }
 
         // ==================== 核心功能 ====================
+
+        // 智能答案判断：容忍小错误
+        function isSimilarEnough(userInput, correctAnswer) {
+            // 1. 完全匹配（忽略空格）
+            const normalizedUser = userInput.replace(/\s+/g, '');
+            const normalizedAnswer = correctAnswer.replace(/\s+/g, '');
+            if (normalizedUser === normalizedAnswer) return true;
+            
+            // 2. 计算相似度（编辑距离）
+            const distance = editDistance(normalizedUser, normalizedAnswer);
+            const maxLength = Math.max(normalizedUser.length, normalizedAnswer.length);
+            const similarity = 1 - (distance / maxLength);
+            
+            // 3. 如果相似度超过85%，认为正确（容错）
+            return similarity >= 0.85;
+        }
+        
+        // 计算编辑距离（Levenshtein Distance）
+        function editDistance(str1, str2) {
+            const m = str1.length;
+            const n = str2.length;
+            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+            
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+            
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (str1[i - 1] === str2[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1];
+                    } else {
+                        dp[i][j] = Math.min(
+                            dp[i - 1][j] + 1,     // 删除
+                            dp[i][j - 1] + 1,     // 插入
+                            dp[i - 1][j - 1] + 1  // 替换
+                        );
+                    }
+                }
+            }
+            
+            return dp[m][n];
+        }
 
         // 切换模式
         function switchMode(mode) {
@@ -881,6 +953,26 @@
             localStorage.setItem(`translation_${currentMode}_group`, selectedGroup);
         }
         
+        // 设置起始题号
+        function setStartQuestion() {
+            const input = document.getElementById('startQuestionInput');
+            const value = parseInt(input.value);
+            const data = getCurrentData();
+            
+            if (value < 1 || value > data.length) {
+                alert(`请输入 1 到 ${data.length} 之间的数字！`);
+                return;
+            }
+            
+            startQuestion = value - 1; // 转换为0-based索引
+            document.getElementById('currentStartQuestion').textContent = `第${value}题`;
+            
+            // 保存起始题号
+            localStorage.setItem(`translation_${currentMode}_start`, startQuestion);
+            
+            alert(`已设置从第${value}题开始！`);
+        }
+        
         // 获取当前分组的题目数据
         function getGroupedData() {
             const allData = currentMode === 'phrase' ? phraseData : vocabularyData;
@@ -897,7 +989,7 @@
         // 开始练习
         function startPractice() {
             isStarted = true;
-            currentIndex = 0;
+            currentIndex = startQuestion; // 从设置的起始题号开始
             correctCount = 0;
             wrongCount = 0;
             
@@ -979,7 +1071,7 @@
             let isCorrect = false;
             
             if (currentMode === 'phrase') {
-                // 词组检测：支持多个答案（用 / 分隔）
+                // 词组检测：支持多个答案（用 / 分隔），智能判断
                 const normalizedUser = userInput.toLowerCase().trim();
                 
                 // 检查是否有多个答案（用 / 分隔）
@@ -988,15 +1080,11 @@
                     const answers = currentItem.english.split('/').map(a => a.toLowerCase().trim());
                     // 检查用户输入是否匹配其中任何一个答案
                     isCorrect = answers.some(answer => {
-                        const normalizedAnswer = answer.replace(/\s+/g, '');
-                        const normalizedInput = normalizedUser.replace(/\s+/g, '');
-                        return normalizedInput === normalizedAnswer;
+                        return isSimilarEnough(normalizedUser, answer);
                     });
                 } else {
                     // 单个答案
-                    const normalizedAnswer = currentItem.english.toLowerCase().replace(/\s+/g, '');
-                    const normalizedInput = normalizedUser.replace(/\s+/g, '');
-                    isCorrect = normalizedInput === normalizedAnswer;
+                    isCorrect = isSimilarEnough(normalizedUser, currentItem.english.toLowerCase());
                 }
             } else {
                 // 词汇检测：支持多个答案
