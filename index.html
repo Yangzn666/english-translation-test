@@ -1383,18 +1383,6 @@
         }
 
         // 键盘事件监听
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                if (!isStarted) {
-                    startPractice();
-                } else if (!isChecked) {
-                    checkAnswer();
-                } else {
-                    nextQuestion();
-                }
-            }
-        });
-
         // 初始化
         loadProgress(); // 加载保存的进度
         updateStats();
