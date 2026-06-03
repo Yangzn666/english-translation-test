@@ -796,46 +796,12 @@
 
         // ==================== 核心功能 ====================
 
-        // 智能答案判断：容忍小错误
+        // 智能答案判断：只忽略空格，不容忍拼写错误
         function isSimilarEnough(userInput, correctAnswer) {
-            // 1. 完全匹配（忽略空格）
-            const normalizedUser = userInput.replace(/\s+/g, '');
-            const normalizedAnswer = correctAnswer.replace(/\s+/g, '');
-            if (normalizedUser === normalizedAnswer) return true;
-            
-            // 2. 计算相似度（编辑距离）
-            const distance = editDistance(normalizedUser, normalizedAnswer);
-            const maxLength = Math.max(normalizedUser.length, normalizedAnswer.length);
-            const similarity = 1 - (distance / maxLength);
-            
-            // 3. 如果相似度超过85%，认为正确（容错）
-            return similarity >= 0.85;
-        }
-        
-        // 计算编辑距离（Levenshtein Distance）
-        function editDistance(str1, str2) {
-            const m = str1.length;
-            const n = str2.length;
-            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-            
-            for (let i = 0; i <= m; i++) dp[i][0] = i;
-            for (let j = 0; j <= n; j++) dp[0][j] = j;
-            
-            for (let i = 1; i <= m; i++) {
-                for (let j = 1; j <= n; j++) {
-                    if (str1[i - 1] === str2[j - 1]) {
-                        dp[i][j] = dp[i - 1][j - 1];
-                    } else {
-                        dp[i][j] = Math.min(
-                            dp[i - 1][j] + 1,     // 删除
-                            dp[i][j - 1] + 1,     // 插入
-                            dp[i - 1][j - 1] + 1  // 替换
-                        );
-                    }
-                }
-            }
-            
-            return dp[m][n];
+            // 完全匹配（忽略空格和大小写）
+            const normalizedUser = userInput.toLowerCase().replace(/\s+/g, '');
+            const normalizedAnswer = correctAnswer.toLowerCase().replace(/\s+/g, '');
+            return normalizedUser === normalizedAnswer;
         }
 
         // 切换模式
