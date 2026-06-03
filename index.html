@@ -831,7 +831,7 @@
 
         // 重置状态
         function resetState() {
-            currentIndex = 0;
+            currentIndex = startQuestion; // 重置为起始题号
             correctCount = 0;
             wrongCount = 0;
             isStarted = false;
@@ -1396,7 +1396,7 @@
 
         // 键盘事件监听
         // 初始化
-        loadProgress(); // 加载保存的进度
+        switchMode('phrase'); // 初始化模式（会自动调用 loadProgress）
         updateStats();
     </script>
 </body>
